@@ -1,0 +1,19 @@
+package idris_async
+
+brief = "Higher-level abstractions for asynchronous code in idris"
+version = 0.1.0
+readme = ./README.md
+license = "MIT"
+author = "Risto Stevcev"
+maintainer = "Risto Stevcev"
+homepage = https://github.com/Risto-Stevcev/idris-async
+sourceloc = https://github.com/Risto-Stevcev/idris-async
+bugtracker = https://github.com/Risto-Stevcev/idris-async/issues
+
+modules = Control.Monad.Async
+        , Control.Monad.AsyncJS_IO
+        , Test.Control.Monad.AsyncJS_IO
+
+executable = "test"
+opts = "--codegen node"
+main = Test.Control.Monad.AsyncJS_IO
