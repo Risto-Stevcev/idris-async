@@ -1,0 +1,6 @@
+*.*~
+*.ibc
+*.vim
+bower_components
+foo.txt
+test
