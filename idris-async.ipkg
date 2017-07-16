@@ -14,6 +14,8 @@ modules = Control.Monad.Async
         , Control.Monad.AsyncJS_IO
         , Test.Control.Monad.AsyncJS_IO
 
+pkgs = idris_jserror
+
 executable = "test"
 opts = "--codegen node"
 main = Test.Control.Monad.AsyncJS_IO

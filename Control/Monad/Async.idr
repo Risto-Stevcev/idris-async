@@ -1,5 +1,5 @@
 module Control.Monad.Async
 
 public export
-data Async : Type -> Type -> Type where
-  MkAsync : ((a -> b) -> b) -> Async b a
+data Async : Type -> Type -> Type -> Type where
+  MkAsync : ((error -> r) -> (success -> r) -> r) -> Async r error success

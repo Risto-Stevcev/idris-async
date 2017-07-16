@@ -1,11 +1,13 @@
 module Control.Monad.AsyncJS_IO
 
 import public Control.Monad.Async
+import Data.JSError
+
 
 %access public export
 
 AsyncJS_IO : Type -> Type
-AsyncJS_IO = Async (JS_IO ())
+AsyncJS_IO = Async (JS_IO ()) JSError
 
 
 --------------------------------------------------------------------------------
@@ -13,17 +15,15 @@ AsyncJS_IO = Async (JS_IO ())
 --------------------------------------------------------------------------------
 
 Functor AsyncJS_IO where
-  map f (MkAsync cb) = MkAsync (\cb' => cb (\x => cb' (f x)))
+  map f (MkAsync cb) = MkAsync (\error => \success => cb error (\x => success (f x)))
 
-Applicative AsyncJS_IO where
-  pure x = MkAsync $ \f => assert_total $
-    foreign FFI_JS "setTimeout(%0, 0)" (JsFn (() -> JS_IO ()) -> JS_IO ()) (MkJsFn $ \_ => f x)
-  (MkAsync cb1) <*> (MkAsync cb2) =
-    MkAsync (\cb => cb1 (\f => cb2 (\x => cb (f x))))
+mutual
+  Applicative AsyncJS_IO where
+    pure x = MkAsync (\error => \success => success x)
+    x <*> y = x >>= (\f => f <$> y)
 
-Monad AsyncJS_IO where
-  (MkAsync cb1) >>= f =
-    MkAsync $ \cb => cb1 (\x => let MkAsync cb2 = f x in cb2 cb)
+  Monad AsyncJS_IO where
+    (MkAsync cb) >>= f = MkAsync (\error => \success => cb error (\x => let (MkAsync cb') = (f x) in cb' error success))
 
 
 --------------------------------------------------------------------------------
@@ -31,12 +31,21 @@ Monad AsyncJS_IO where
 --------------------------------------------------------------------------------
 
 liftJS_IO : JS_IO a -> AsyncJS_IO a
-liftJS_IO x = MkAsync (\cb => x >>= cb)
+liftJS_IO x = MkAsync (\err => \cb => x >>= cb)
+
+attempt : AsyncJS_IO a -> AsyncJS_IO (Either JSError a)
+attempt (MkAsync cb) = MkAsync $ \_ => \success => cb (\e => success $ Left e) (\s => success $ Right s)
+
+throwAsync : AsyncJS_IO a -> AsyncJS_IO ()
+throwAsync (MkAsync cb) = MkAsync (\_ => \_ => cb (\err => throwErr err) (\_ => pure ()))
+  where
+    throwErr : JSError -> JS_IO ()
+    throwErr (MkJSError p) = foreign FFI_JS "(function() { if (%0 instanceof Error) throw %0 })()" (Ptr -> JS_IO ()) p
 
 parallel : AsyncJS_IO a -> AsyncJS_IO a -> AsyncJS_IO a
-parallel (MkAsync s1) (MkAsync s2) = MkAsync $ \cb => do
-  s1 cb
-  s2 cb
+parallel (MkAsync s1) (MkAsync s2) = MkAsync $ \err => \cb => do
+  s1 err cb
+  s2 err cb
 
 runAsync : AsyncJS_IO () -> JS_IO ()
-runAsync (MkAsync f) = f (\_ => pure ())
+runAsync (MkAsync f) = f (\_ => pure ()) (\_ => pure ())

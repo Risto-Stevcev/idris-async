@@ -1,0 +1,25 @@
+{
+  "name": "idris-async",
+  "homepage": "https://github.com/Risto-Stevcev/idris-async",
+  "authors": [
+    "Risto Stevcev <risto1@gmail.com>"
+  ],
+  "description": "Higher-level abstractions for asynchronous code in idris",
+  "main": "",
+  "keywords": [
+    "idris",
+    "async",
+    "js"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "idris-jserror": "^0.1.0"
+  }
+}
